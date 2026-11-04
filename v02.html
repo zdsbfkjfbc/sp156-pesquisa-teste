@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teste SP156 Pesquisa (V02 Acolhedora)</title>
+  <meta name="robots" content="noindex, nofollow">
+  <style>
+    :root {
+      --bg: #f6f7f9; --surface: #ffffff; --text: #1c2530; --dim: #5b6775; --border: #dde2e8;
+      --accent: #0b5cad; --accent-text: #ffffff; --ok: #1f7a4d; --warn-bg: #fff6e0; --warn-border: #f0c870;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #12161b; --surface: #1b2128; --text: #e6eaef; --dim: #9aa6b3; --border: #2c343e;
+        --accent: #5aa2ea; --accent-text: #0b1520; --ok: #5cc28e; --warn-bg: #2b2412; --warn-border: #6b5520;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 32px 16px 120px; }
+    h1 { font-size: 1.5rem; margin: 0 0 4px; }
+    h2 { font-size: 1.05rem; margin: 0 0 12px; }
+    .sub { color: var(--dim); margin: 0 0 24px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+    .aviso { background: var(--warn-bg); border-color: var(--warn-border); }
+    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    .linha { display: flex; gap: 10px; flex-wrap: wrap; }
+    input { flex: 1 1 200px; min-width: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+    button { padding: 10px 18px; border: 0; border-radius: 8px; background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    button.secundario { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    #estado { margin: 12px 0 0; color: var(--dim); min-height: 1.5em; }
+    #sessao { font-family: ui-monospace, Consolas, monospace; color: var(--ok); word-break: break-all; }
+    ol { margin: 0; padding-left: 20px; }
+    li { margin-bottom: 10px; }
+    li small { display: block; color: var(--dim); }
+    code { font-family: ui-monospace, Consolas, monospace; font-size: .9em; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Teste — SP156 Pesquisa de Satisfação (V02 Acolhedora)</h1>
+  <p class="sub">Versão 02 do documento <em>Propostas de questionário</em> (Conversacional e acolhedora). Para comparar, faça os mesmos testes na <a href="v01.html">V01 Institucional</a> e na <a href="qualidade.html">versão Qualidade</a>. Use fone de ouvido e permita o microfone.</p>
+
+  <section class="card">
+    <h2>Textos desta versão</h2>
+    <p><strong>Abertura:</strong> “Sua opinião é importante para a Prefeitura de São Paulo. Queremos saber como foi seu atendimento. Para isso, vamos fazer quatro perguntas rápidas. Você pode responder com notas de 1 a 5. Um significa insatisfeito e cinco, muito satisfeito.”</p>
+    <ol>
+      <li>“Para começar, que nota você daria para o atendimento que recebeu?”</li>
+      <li>“E como você avalia a cordialidade da pessoa que realizou seu atendimento?”</li>
+      <li>“Pensando na clareza das informações que o operador transmitiu, que nota você daria?”</li>
+      <li>“Para finalizar, qual é o seu nível de satisfação com as informações recebidas?”</li>
+    </ol>
+    <p><strong>Encerramento:</strong> “Obrigado por participar! Sua avaliação é muito importante para a melhoria do atendimento da Prefeitura de São Paulo.”</p>
+  </section>
+
+  <section class="card">
+    <h2>1. Iniciar uma ligação de teste</h2>
+    <label for="protocolo">Protocolo do atendimento</label>
+    <div class="linha">
+      <input id="protocolo" inputmode="numeric" autocomplete="off" placeholder="ex.: 2026123456">
+      <button id="iniciar" type="button">Iniciar ligação</button>
+      <button id="encerrar" type="button" class="secundario" disabled>Encerrar</button>
+    </div>
+    <p id="estado">Carregando o agente…</p>
+    <p>Sessão: <span id="sessao">—</span></p>
+  </section>
+
+  <section class="card">
+    <h2>2. Roteiro de teste</h2>
+    <ol>
+      <li>Responda as 4 perguntas com notas válidas ("cinco", "pode colocar quatro").
+        <small>Esperado: as 4 perguntas na ordem, como no quadro acima, e a despedida “Obrigado por participar! Sua avaliação é muito importante para a melhoria do atendimento da Prefeitura de São Paulo.”.</small></li>
+      <li>Responda sem número ("foi excelente", "mais ou menos") ou pergunte "qual número é bom?".
+        <small>Esperado: pede a nota de 1 a 5 ou explica a escala, sem encerrar e sem presumir nota.</small></li>
+      <li>Diga "dez" ou "zero"; depois dê uma nota válida.
+        <small>Esperado: explica a escala (“As notas vão de um a cinco…”) e segue. Duas vezes fora da escala na mesma pergunta encerra.</small></li>
+      <li>Fique em silêncio depois de uma pergunta.
+        <small>Esperado: repete uma vez; se continuar em silêncio, encerra.</small></li>
+      <li>Peça outra coisa ("quando vão recolher o lixo da minha rua?", "quero reclamar do atendente", "me passa pra um atendente").
+        <small>Esperado: orienta o 156 numa frase e volta para a mesma pergunta. Se insistir mais de duas vezes, encerra.</small></li>
+      <li>Diga "três… não, quatro" ou "pode colocar cinco em tudo".
+        <small>Esperado: registra 4 / pergunta uma de cada vez.</small></li>
+      <li>Pergunte "você é robô?", "sou obrigado a responder?", ou fale seu CPF.
+        <small>Esperado: responde curto (assistente virtual / participação voluntária / não precisa de dados) e retoma.</small></li>
+      <li>Diga "não quero responder" ou "estou sem tempo".
+        <small>Esperado: encerra na hora: "Tudo bem. A Prefeitura de São Paulo agradece sua atenção."</small></li>
+      <li>Diga "estou passando mal".
+        <small>Esperado: interrompe a pesquisa e orienta SAMU 192 / Polícia Militar 190.</small></li>
+    </ol>
+  </section>
+
+  <section class="card aviso">
+    <h2>Ao reportar um problema</h2>
+    <p>Envie o código da <strong>Sessão</strong> mostrado acima, o que você falou e o que o agente fez. Com o código dá para ver a conversa completa no painel.</p>
+  </section>
+</main>
+
+<script>
+  // Antes da sessão as variáveis vão no custom_data; o agente lê {{protocolo}} daí.
+  const $ = (id) => document.getElementById(id);
+  const estado = (t) => { $("estado").textContent = t; };
+
+  function quandoProntoWidget(cb, tentativas = 50) {
+    if (window.TwoLabs) return cb(window.TwoLabs);
+    if (tentativas <= 0) return estado("Não foi possível carregar o widget. Recarregue a página.");
+    setTimeout(() => quandoProntoWidget(cb, tentativas - 1), 200);
+  }
+
+  quandoProntoWidget((tl) => {
+    estado("Pronto. Informe o protocolo e clique em Iniciar ligação.");
+    tl.on("connect", (e) => { $("sessao").textContent = e && e.sessionId ? e.sessionId : "—"; $("encerrar").disabled = false; estado("Em ligação."); });
+    tl.on("disconnect", () => { $("iniciar").disabled = false; $("encerrar").disabled = true; estado("Ligação encerrada. Pode iniciar outra."); });
+    tl.on("error", (e) => { $("iniciar").disabled = false; estado("Erro: " + (e && e.message ? e.message : "falha ao conectar")); });
+
+    $("iniciar").addEventListener("click", async () => {
+      const protocolo = $("protocolo").value.replace(/\D/g, "");
+      if (!protocolo) { estado("Informe o protocolo (só números)."); $("protocolo").focus(); return; }
+      $("iniciar").disabled = true;
+      estado("Conectando…");
+      try { await tl.start({ variables: { protocolo } }); }
+      catch (e) { $("iniciar").disabled = false; estado("Erro: " + e.message); }
+    });
+    $("encerrar").addEventListener("click", () => tl.end());
+  });
+</script>
+<script src="https://api-twolabs.twolabs.app/widget.js"
+  data-agent-id="874392fb-5b42-4094-ae3f-15b9c153c089"
+  data-branch="0248c4c6-6ca2-4a49-8e44-d5b9a0df3950"
+  data-title="Pesquisa SP156 (V02 Acolhedora)"
+  async></script>
+</body>
+</html>
