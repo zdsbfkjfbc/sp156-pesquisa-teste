@@ -26,62 +26,159 @@
     .aviso { background: var(--warn-bg); border-color: var(--warn-border); }
     label { display: block; font-weight: 600; margin-bottom: 6px; }
     .linha { display: flex; gap: 10px; flex-wrap: wrap; }
-    input { flex: 1 1 200px; min-width: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+    input, select { flex: 1 1 200px; min-width: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+    select { width: 100%; cursor: pointer; }
     button { padding: 10px 18px; border: 0; border-radius: 8px; background: var(--accent); color: var(--accent-text); font: inherit; font-weight: 600; cursor: pointer; }
     button:disabled { opacity: .55; cursor: not-allowed; }
     button.secundario { background: transparent; color: var(--text); border: 1px solid var(--border); }
     #estado { margin: 12px 0 0; color: var(--dim); min-height: 1.5em; }
     #sessao { font-family: ui-monospace, Consolas, monospace; color: var(--ok); word-break: break-all; }
+    #descricao { color: var(--dim); margin: 10px 0 0; }
     ol { margin: 0; padding-left: 20px; }
     li { margin-bottom: 10px; }
     li small { display: block; color: var(--dim); }
+    .falas p { margin: 0 0 10px; }
+    .falas ol li { margin-bottom: 4px; }
     code { font-family: ui-monospace, Consolas, monospace; font-size: .9em; }
   </style>
 </head>
 <body>
 <main>
   <h1>Teste — SP156 Pesquisa de Satisfação</h1>
-  <p class="sub">Página interna para testar o agente de voz pelo navegador. Use fone de ouvido e permita o microfone. Para comparar com a versão do Manual da Qualidade, use a <a href="qualidade.html">página da versão Qualidade</a>.</p>
+  <p class="sub">Página interna para testar o agente de voz pelo navegador. Escolha a versão, use fone de ouvido e permita o microfone. Para comparar versões, faça os mesmos testes em cada uma.</p>
 
   <section class="card">
-    <h2>1. Iniciar uma ligação de teste</h2>
-    <label for="protocolo">Protocolo do atendimento</label>
-    <div class="linha">
-      <input id="protocolo" inputmode="numeric" autocomplete="off" placeholder="ex.: 2026123456">
-      <button id="iniciar" type="button">Iniciar ligação</button>
-      <button id="encerrar" type="button" class="secundario" disabled>Encerrar</button>
-    </div>
-    <p id="estado">Carregando o agente…</p>
-    <p>Sessão: <span id="sessao">—</span></p>
+    <h2>1. Versão do agente</h2>
+    <label for="versao">Versão</label>
+    <select id="versao"></select>
+    <p id="descricao"></p>
   </section>
 
   <section class="card">
-    <h2>2. Roteiro de teste</h2>
-    <ol>
-      <li>Responda as 4 perguntas com notas válidas (ex.: "nota cinco", "quatro").
-        <small>Esperado: as 4 perguntas na ordem e a despedida "É muito importante para a Prefeitura…".</small></li>
-      <li>Numa pergunta, responda "zero" ou "nove"; depois dê uma nota válida.
-        <small>Esperado: o agente repete a pergunta uma vez e segue normalmente.</small></li>
-      <li>Responda duas vezes seguidas fora da escala na mesma pergunta.
-        <small>Esperado: encerra com "A Prefeitura de São Paulo agradece sua atenção."</small></li>
-      <li>Fique em silêncio depois de uma pergunta.
-        <small>Esperado: repete a pergunta; se continuar em silêncio, encerra.</small></li>
-      <li>Fale outra coisa ("quero reclamar do atendimento").
-        <small>Esperado: não conversa sobre o assunto; repete a pergunta.</small></li>
-    </ol>
+    <h2>2. Iniciar uma ligação de teste</h2>
+    <label for="protocolo">Protocolo do atendimento</label>
+    <div class="linha">
+      <input id="protocolo" inputmode="numeric" autocomplete="off" placeholder="ex.: 2026123456">
+      <button id="iniciar" type="button" disabled>Iniciar ligação</button>
+      <button id="encerrar" type="button" class="secundario" disabled>Encerrar</button>
+    </div>
+    <p id="estado">Carregando o agente…</p>
+    <p>Versão em teste: <strong id="versao-atual">—</strong> · Sessão: <span id="sessao">—</span></p>
+  </section>
+
+  <section class="card falas">
+    <h2>3. Textos desta versão</h2>
+    <p><strong>Abertura:</strong> <span id="abertura"></span></p>
+    <ol id="perguntas"></ol>
+    <p style="margin-top:10px"><strong>Encerramento:</strong> <span id="encerramento"></span></p>
+  </section>
+
+  <section class="card">
+    <h2>4. Roteiro de teste</h2>
+    <ol id="roteiro"></ol>
   </section>
 
   <section class="card aviso">
     <h2>Ao reportar um problema</h2>
-    <p>Envie o código da <strong>Sessão</strong> mostrado acima, o que você falou e o que o agente fez. Com o código dá para ver a conversa completa no painel.</p>
+    <p>Envie a <strong>versão</strong> e o código da <strong>Sessão</strong> mostrados acima, o que você falou e o que o agente fez. Com o código dá para ver a conversa completa no painel.</p>
   </section>
 </main>
 
 <script>
-  // Antes da sessão as variáveis vão no custom_data; o agente lê {{protocolo}} daí.
+  const AGENTE = "874392fb-5b42-4094-ae3f-15b9c153c089";
+
+  // Roteiro comum às versões construídas sobre a Qualidade (Manual de Comportamento v2.0)
+  const ROTEIRO_QUALIDADE = (despedida) => [
+    ["Responda as 4 perguntas com notas válidas (\"cinco\", \"pode colocar quatro\").", `Esperado: as 4 perguntas na ordem, como no quadro acima, e a despedida "${despedida}".`],
+    ["Responda sem número (\"foi excelente\", \"mais ou menos\") ou pergunte \"qual número é bom?\".", "Esperado: pede a nota de 1 a 5 ou explica a escala, sem encerrar e sem presumir nota."],
+    ["Diga \"dez\" ou \"zero\"; depois dê uma nota válida.", "Esperado: explica a escala (\"As notas vão de um a cinco…\") e segue. Duas vezes fora da escala na mesma pergunta encerra."],
+    ["Fique em silêncio depois de uma pergunta.", "Esperado: repete uma vez; se continuar em silêncio, encerra."],
+    ["Peça outra coisa (\"quando vão recolher o lixo da minha rua?\", \"quero reclamar do atendente\", \"me passa pra um atendente\").", "Esperado: orienta o um cinco meia numa frase e volta para a mesma pergunta. Se insistir mais de duas vezes, encerra."],
+    ["Diga \"três… não, quatro\" ou \"pode colocar cinco em tudo\".", "Esperado: registra 4 / pergunta uma de cada vez."],
+    ["Pergunte \"você é robô?\", \"sou obrigado a responder?\", ou fale seu CPF.", "Esperado: responde curto (assistente virtual / participação voluntária / não precisa de dados) e retoma."],
+    ["Diga \"não quero responder\" ou \"estou sem tempo\".", "Esperado: encerra na hora: \"Tudo bem. A Prefeitura de São Paulo agradece sua atenção.\""],
+    ["Diga \"estou passando mal\".", "Esperado: interrompe a pesquisa e orienta SAMU um nove dois / Polícia Militar um nove zero."],
+  ];
+
+  const VERSOES = {
+    producao: {
+      nome: "Produção (main v16)",
+      descricao: "Versão que está em produção (100% do tráfego).",
+      branch: null,
+      abertura: "Você também pode colaborar com a melhoria do atendimento avaliando o nosso Operador, atribuindo notas de 1 a 5, sendo 1 para insatisfeito e 5 muito satisfeito. São apenas quatro rápidas perguntas. O tempo estimado desta pesquisa é de 45 segundos.",
+      perguntas: ["De 1 a 5: Qual o seu nível de satisfação com o atendimento prestado pelo nosso Operador?", "De 1 a 5: Qual seu nível de satisfação com a cordialidade do nosso Operador?", "De 1 a 5: Qual seu nível de satisfação com a clareza das informações transmitidas pelo nosso Operador?", "De 1 a 5: Qual seu nível de satisfação com as informações recebidas?"],
+      encerramento: "A Prefeitura de São Paulo agradece sua participação.",
+      roteiro: [
+        ["Responda as 4 perguntas com notas válidas (ex.: \"nota cinco\", \"quatro\").", "Esperado: as 4 perguntas na ordem e a despedida \"A Prefeitura de São Paulo agradece sua participação.\""],
+        ["Numa pergunta, responda \"zero\" ou \"nove\"; depois dê uma nota válida.", "Esperado: o agente explica a escala, repete a pergunta uma vez e segue normalmente."],
+        ["Responda duas vezes seguidas fora da escala na mesma pergunta.", "Esperado: encerra com \"A Prefeitura de São Paulo agradece sua atenção.\""],
+        ["Fique em silêncio depois de uma pergunta.", "Esperado: repete a pergunta; se continuar em silêncio, encerra."],
+        ["Fale outra coisa (\"quero reclamar do atendimento\").", "Esperado: não conversa sobre o assunto; repete a pergunta."],
+      ],
+    },
+    qualidade: {
+      nome: "Qualidade v9",
+      descricao: "Manual de Comportamento da Área de Qualidade (v2.0) + correções do parecer dos testes de 03/11.",
+      branch: "adf67ac9-951a-41df-a86c-6703f9d4e832",
+      abertura: "Agora, queremos saber como foi seu atendimento. São quatro perguntas rápidas, com notas de 1 a 5. Cinco é muito satisfeito e um é insatisfeito.",
+      perguntas: ["Que nota você dá para o atendimento que recebeu?", "E para a cordialidade da pessoa que te atendeu?", "E para a clareza das informações que recebeu?", "Por último, que nota você dá para a utilidade dessas informações?"],
+      encerramento: "Agradecemos muito pela sua participação. Sua opinião é muito importante para que a Prefeitura de São Paulo possa melhorar cada vez mais os serviços oferecidos.",
+      extras: [
+        ["Logo depois de passar para a pergunta seguinte, corrija a anterior: \"não, troca, foi quatro\".", "Esperado: \"Certo, o atendimento fica com nota quatro.\" e repete a pergunta atual."],
+        ["Diga \"só um minuto, por favor\" e fique em silêncio alguns segundos.", "Esperado: \"Claro, fico aguardando.\"; depois: \"Quando estiver pronto, é só me dizer a nota…\". Não encerra."],
+        ["Pergunte \"se eu não quiser continuar, o que eu faço?\".", "Esperado: \"Se preferir encerrar, é só me dizer. Quer continuar a pesquisa?\" Não encerra sozinho."],
+        ["Numa pergunta, diga \"como assim? não entendi a pergunta\".", "Esperado: explica o que aquela pergunta avalia (não uma explicação genérica sobre a pesquisa) e repete a pergunta."],
+        ["Comece com \"oi, tudo bem?\".", "Esperado: responde o cumprimento e repete a pergunta."],
+      ],
+    },
+    v01: {
+      nome: "V01 Institucional",
+      descricao: "Versão 01 do documento Propostas de questionário (Natural e institucional), sobre a Qualidade v8.",
+      branch: "b933daaf-a7ab-422c-85bb-245bef160b49",
+      abertura: "A Prefeitura de São Paulo gostaria de conhecer sua opinião sobre o atendimento recebido. São apenas quatro perguntas. Para responder, dê uma nota de 1 a 5, sendo 1 para insatisfeito e 5 para muito satisfeito. Vamos começar?",
+      perguntas: ["Como você avalia o atendimento que recebeu do nosso operador?", "E quanto à cordialidade do operador, que nota você daria?", "Sobre a clareza das informações transmitidas pelo operador, qual é a sua avaliação?", "Por último, qual é a sua satisfação com as informações que recebeu?"],
+      encerramento: "A Prefeitura de São Paulo agradece sua participação. Sua opinião nos ajuda a melhorar nossos serviços.",
+      extras: [["Depois do \"Vamos começar?\", responda \"sim, vamos\".", "Esperado: o \"sim\" não conta como nota; o agente repete a pergunta 1."]],
+    },
+    v02: {
+      nome: "V02 Acolhedora",
+      descricao: "Versão 02 do documento Propostas de questionário (Conversacional e acolhedora), sobre a Qualidade v8.",
+      branch: "0248c4c6-6ca2-4a49-8e44-d5b9a0df3950",
+      abertura: "Sua opinião é importante para a Prefeitura de São Paulo. Queremos saber como foi seu atendimento. Para isso, vamos fazer quatro perguntas rápidas. Você pode responder com notas de 1 a 5. Um significa insatisfeito e cinco, muito satisfeito.",
+      perguntas: ["Para começar, que nota você daria para o atendimento que recebeu?", "E como você avalia a cordialidade da pessoa que realizou seu atendimento?", "Pensando na clareza das informações que o operador transmitiu, que nota você daria?", "Para finalizar, qual é o seu nível de satisfação com as informações recebidas?"],
+      encerramento: "Obrigado por participar! Sua avaliação é muito importante para a melhoria do atendimento da Prefeitura de São Paulo.",
+      extras: [],
+    },
+  };
+
   const $ = (id) => document.getElementById(id);
   const estado = (t) => { $("estado").textContent = t; };
 
+  // versão vem da URL (?versao=v01); o widget carrega uma vez por página, então trocar de versão recarrega
+  const params = new URLSearchParams(location.search);
+  const chave = VERSOES[params.get("versao")] ? params.get("versao") : "producao";
+  const v = VERSOES[chave];
+
+  for (const [k, x] of Object.entries(VERSOES)) $("versao").add(new Option(x.nome, k, false, k === chave));
+  $("versao").addEventListener("change", (e) => {
+    const p = new URLSearchParams(location.search);
+    if (e.target.value === "producao") p.delete("versao"); else p.set("versao", e.target.value);
+    location.search = p.toString();
+  });
+
+  document.title = `Teste SP156 Pesquisa (${v.nome})`;
+  $("descricao").textContent = v.descricao;
+  $("versao-atual").textContent = v.nome;
+  $("abertura").textContent = `"${v.abertura}"`;
+  $("encerramento").textContent = `"${v.encerramento}"`;
+  for (const p of v.perguntas) { const li = document.createElement("li"); li.textContent = `"${p}"`; $("perguntas").append(li); }
+  const roteiro = v.roteiro || [...ROTEIRO_QUALIDADE(v.encerramento), ...v.extras];
+  for (const [acao, esperado] of roteiro) {
+    const li = document.createElement("li"), s = document.createElement("small");
+    li.textContent = acao; s.textContent = esperado; li.append(s); $("roteiro").append(li);
+  }
+
+  // Antes da sessão as variáveis vão no custom_data; o agente lê {{protocolo}} daí.
   function quandoProntoWidget(cb, tentativas = 50) {
     if (window.TwoLabs) return cb(window.TwoLabs);
     if (tentativas <= 0) return estado("Não foi possível carregar o widget. Recarregue a página.");
@@ -89,10 +186,11 @@
   }
 
   quandoProntoWidget((tl) => {
+    $("iniciar").disabled = false;
     estado("Pronto. Informe o protocolo e clique em Iniciar ligação.");
-    tl.on("connect", (e) => { $("sessao").textContent = e && e.sessionId ? e.sessionId : "—"; $("encerrar").disabled = false; estado("Em ligação."); });
-    tl.on("disconnect", () => { $("iniciar").disabled = false; $("encerrar").disabled = true; estado("Ligação encerrada. Pode iniciar outra."); });
-    tl.on("error", (e) => { $("iniciar").disabled = false; estado("Erro: " + (e && e.message ? e.message : "falha ao conectar")); });
+    tl.on("connect", (e) => { $("sessao").textContent = e && e.sessionId ? e.sessionId : "—"; $("encerrar").disabled = false; $("versao").disabled = true; estado("Em ligação."); });
+    tl.on("disconnect", () => { $("iniciar").disabled = false; $("encerrar").disabled = true; $("versao").disabled = false; estado("Ligação encerrada. Pode iniciar outra."); });
+    tl.on("error", (e) => { $("iniciar").disabled = false; $("versao").disabled = false; estado("Erro: " + (e && e.message ? e.message : "falha ao conectar")); });
 
     $("iniciar").addEventListener("click", async () => {
       const protocolo = $("protocolo").value.replace(/\D/g, "");
@@ -104,10 +202,15 @@
     });
     $("encerrar").addEventListener("click", () => tl.end());
   });
+
+  // widget da versão escolhida (sem data-branch = produção)
+  const w = document.createElement("script");
+  w.src = "https://api-twolabs.twolabs.app/widget.js";
+  w.async = true;
+  w.dataset.agentId = AGENTE;
+  if (v.branch) w.dataset.branch = v.branch;
+  w.dataset.title = `Pesquisa SP156 (${v.nome})`;
+  document.body.append(w);
 </script>
-<script src="https://api-twolabs.twolabs.app/widget.js"
-  data-agent-id="874392fb-5b42-4094-ae3f-15b9c153c089"
-  data-title="Pesquisa SP156"
-  async></script>
 </body>
 </html>
